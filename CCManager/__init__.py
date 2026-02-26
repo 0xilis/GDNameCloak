@@ -33,6 +33,15 @@ class GDData(object):
     def decode(self,data):
         pass
 
+    def cloakCCGM(self,ccll=True,ccgm=True):
+        self.ccgm = self.ccgm.replace(b"CopyNerd",b"KrmaL").replace(b"6009783",b"625975").replace(b"20954037",b"5876293")
+        print("ccgm type: " + str(type(self.ccgm)))
+        print("Cloaked! You are now KrmaL.")
+
+    def printCCGM(self,ccll=True,ccgm=True):
+        print("test 123")
+        print(self.ccgm.replace(b"CopyNerd",b"KrmaL").replace(b"6009783",b"625975").replace(b"20954037",b"5876293"))
+
 class GDWinData(GDData):
     def __init__(self):
         super().__init__(self,os.path.join(os.getenv("LOCALAPPDATA"), "GeometryDash"))
@@ -51,13 +60,29 @@ class GDWinData(GDData):
 class GDMacData(GDData):
     MAC_KEY = b"\x69\x70\x75\x39\x54\x55\x76\x35\x34\x79\x76\x5d\x69\x73\x46\x4d\x68\x35\x40\x3b\x74\x2e\x35\x77\x33\x34\x45\x32\x52\x79\x40\x7b"
     def __init__(self):
-        super().__init__(self,os.path.join(os.path.expanduser("~"),"Library/Application Support/GeometryDash"))
         self.cipher = AES.new(GDMacData.MAC_KEY, AES.MODE_ECB)
+        super().__init__(
+            os.path.join(
+                os.path.expanduser("~"),
+                "Library/Application Support/GeometryDash"
+            )
+        )
 
-    def encode(self,data):
+    def encodeOld(self,data):
         extra = len(data) % 16
         if extra > 0:
             data += ('\x0b' * (16 - extra))
+        return self.cipher.encrypt(data)
+
+    def encode(self, data):
+        if isinstance(data, str):
+            data = data.encode("utf-8")
+
+        extra = len(data) % 16
+        if extra > 0:
+            pad_len = 16 - extra
+            data += bytes([pad_len]) * pad_len  # proper PKCS-style padding
+
         return self.cipher.encrypt(data)
 
     def decode(self,data):
